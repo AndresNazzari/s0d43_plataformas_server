@@ -3,6 +3,9 @@ dotenv.config({ path: './.env' });
 import path from 'path';
 import express from 'express';
 import cors from 'cors';
+import { UserRoute } from "./routes/api/User.route.js";
+import { ProductRoute } from "./routes/api/Product.route.js";
+import {seedProducts} from "./config/seedProducts.js";
 
 /*============================[Config]==========================*/
 const app = express();
@@ -16,20 +19,14 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-/*============================[Database]==========================*/
-// await createDatabase();
-// await createTables();
-
+// seedProducts();
 /*============================[Routes]============================*/
-// app.use('/api/user', new UserRoute());
-// app.use('/api/category', new CategoryRoute());
-// app.use('/api/income', new IncomeRoute());
-// app.use('/api/expense', new ExpenseRoute());
+app.use('/api/user', new UserRoute());
+app.use('/api/product', new ProductRoute());
 
 /*============================[Server]============================*/
 const PORT = process.env.PORT || 8080;
 
-//Serve static assters in production
 if (process.env.NODE_ENV === 'production') {
     app.use(express.static('client/build'));
     app.get('*', (req, res) => {
