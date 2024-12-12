@@ -8,6 +8,12 @@ export default class UserService {
         this.UserCollection = collection(db, "users");
     }
 
+    async GetAllUsers() {
+        const snapshot = await getDocs(this.UserCollection);
+        return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+
+
     async UserExists(email) {
         const q = query(this.UserCollection, where("email", "==", email));
         const querySnapshot = await getDocs(q);
@@ -26,12 +32,12 @@ export default class UserService {
     GenerateToken(email, roleId, image) {
         const payload = { user: { email, roleId, image } };
         return jwt.sign(payload, process.env.JWT_SECRET, {
-            expiresIn: 60*60*24*365,
+            expiresIn: '1y',
         });
     }
 
-    async CreateUser(email, roleId, image, passwordEncrypted) {
-        await addDoc(this.UserCollection, {email, roleId, image, password: passwordEncrypted, created_at: new Date()});
+    async CreateUser(email, roleId, image, passwordEncrypted, name, surname) {
+        await addDoc(this.UserCollection, {email, roleId, image, password: passwordEncrypted, name, surname, created_at: new Date()});
     }
 
     async GetUser(email) {

@@ -9,6 +9,13 @@ export class UserRoute extends express.Router {
         super();
         this.userController = new UserController();
 
+        this.get('/all',
+            AuthMiddleware, // Opcional: si quieres restringir el acceso
+            AdminMiddleware, // Opcional: si solo admin debería ver todos los usuarios
+            this.userController.GetAllUsers
+        );
+
+
         //@route    GET api/user/me
         //@desc     Get user by email
         //@access   Public
@@ -23,9 +30,6 @@ export class UserRoute extends express.Router {
             '/',
             [
                 check('email', 'Please include a valid email').isEmail(),
-                check('password', 'Please enter a password with 6 or more characters').isLength({
-                    min: 6,
-                }),
             ],
             this.userController.CreateUser
         );

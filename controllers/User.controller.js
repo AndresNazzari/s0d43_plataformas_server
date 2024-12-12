@@ -5,6 +5,7 @@ export default class UserController {
     constructor() {
         this.userService = new UserService();
 
+        this.GetAllUsers = this.GetAllUsers.bind(this);
         this.CreateUser = this.CreateUser.bind(this);
         this.LoginUser = this.LoginUser.bind(this);
         this.GetUser = this.GetUser.bind(this);
@@ -12,13 +13,26 @@ export default class UserController {
         this.DeleteUser = this.DeleteUser.bind(this);
 
     }
+    async GetAllUsers(req, res) {
+        try {
+            const users = await this.userService.GetAllUsers();
+            // Opcional: remover password antes de enviar la respuesta
+            const usersWithoutPasswords = users.map(({ password, ...user }) => user);
+
+            res.status(200).json(usersWithoutPasswords);
+        } catch (error) {
+            console.error(error.message);
+            res.status(500).send('Server Error');
+        }
+    }
+
 
     async CreateUser(req, res) {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
-        const { email, password, roleId, image } = req.body;
+        const { email, password, roleId, image, name, surname } = req.body;
 
         try {
             const queryResult = await this.userService.UserExists(email);
@@ -27,11 +41,12 @@ export default class UserController {
                 return res.status(400).json({ errors: [{ msg: 'Email already registered' }] });
             }
 
-            const passwordEncrypted = await this.userService.EncryptPassword(password);
-            await this.userService.CreateUser(email, roleId, image, passwordEncrypted);
-            const token = this.userService.GenerateToken(email, roleId, image);
+            const passwordEncrypted = await this.userService.EncryptPassword(password || email);
+            await this.userService.CreateUser(email, roleId, image, passwordEncrypted, name, surname);
+            const user = await this.userService.GetUser(email);
+            const token = this.userService.GenerateToken(email, roleId, image, name, surname);
 
-            res.status(200).json({ token });
+            res.status(200).json({ user, token });
         } catch (error) {
             console.error(error.message);
             res.status(500).send('Server Error');
@@ -59,7 +74,7 @@ export default class UserController {
 
             const token = this.userService.GenerateToken(email);
 
-            res.status(200).json({ token });
+            res.status(200).json({ user, token });
         } catch (error) {
             console.error(error.message);
             res.status(500).send('Server Error');
@@ -71,7 +86,7 @@ export default class UserController {
             const email = req.user.email;
             const user = await this.userService.GetUser(email);
             const { password, ...userWithoutPassword } = user;
-            res.status(200).json({ userWithoutPassword });
+            res.status(200).json({ user: userWithoutPassword });
         } catch (error) {
             console.error(error.message);
             res.status(500).send('Server Error');
